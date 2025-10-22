@@ -172,6 +172,47 @@ public class AVL<T extends Comparable<T>> extends ArbolBinarioBusqueda<T>{
         nodoEnTurno.setHijoDer(nodoARetornar);
         return rotacionSimpleAIzquierda(nodoEnTurno); 
     }
+    
+    
+    
+    
+    
+    //practica 
+    
+    private NodoBinario<T> rotacionSimpleDere(NodoBinario<T> nodoEnTurno){
+        NodoBinario<T> nodoAux = nodoEnTurno.getHijoIzq();
+        nodoEnTurno.setHijoIzq(nodoAux.getHijoDer());
+        nodoAux.setHijoDer(nodoEnTurno);
+        return nodoAux;
+    }
+    
+    private NodoBinario<T> rotacionSimpleIzqui(NodoBinario<T> nodoEnTurno){
+        NodoBinario<T> nodoAux = nodoEnTurno.getHijoDer();
+        nodoEnTurno.setHijoDer(nodoAux.getHijoIzq());
+        nodoAux.setHijoIzq(nodoEnTurno);
+        return nodoAux;
+    }
+    
+    private NodoBinario<T> rotacionDobleDerecha(NodoBinario<T> nodoEnTurno){
+        NodoBinario<T> nodoAuxi = rotacionSimpleIzqui(nodoEnTurno.getHijoIzq());
+        nodoEnTurno.setHijoIzq(nodoAuxi);
+        return rotacionSimpleDere(nodoEnTurno);
+    }
+    
+    private NodoBinario<T> rotacionDobleIzquier(NodoBinario<T> nodoEnTurno){
+        NodoBinario<T> nodoAuxi = rotacionSimpleDere(nodoEnTurno.getHijoDer());
+        nodoEnTurno.setHijoDer(nodoAuxi);
+        return rotacionSimpleIzqui(nodoEnTurno);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     
 }

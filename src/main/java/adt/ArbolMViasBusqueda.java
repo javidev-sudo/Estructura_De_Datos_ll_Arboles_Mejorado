@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import excepciones.ExcepcionOrdenInvalido;
 
 
 public class ArbolMViasBusqueda <T extends Comparable<T>> implements IArbolBusqueda<T>{
@@ -19,8 +20,17 @@ public class ArbolMViasBusqueda <T extends Comparable<T>> implements IArbolBusqu
     protected NodoMVias<T> raiz;
     protected int orden;
 
-    public ArbolMViasBusqueda(int orden) {
+    public ArbolMViasBusqueda() {
+        this.orden = ORDEN_MINIMO;
+    }
+    
+    public ArbolMViasBusqueda(int orden) throws ExcepcionOrdenInvalido{
+        if(orden < ORDEN_MINIMO){
+            throw new ExcepcionOrdenInvalido();
+        }
+        
         this.orden = orden;
+                
     }
     
     
@@ -40,7 +50,7 @@ public class ArbolMViasBusqueda <T extends Comparable<T>> implements IArbolBusqu
             throw new IllegalArgumentException("No se puede insertar datos nulos!!");
         }
         if(this.esArbolVacio()){
-            this.raiz = new NodoMVias<>(this.orden,datoAInsertar);
+            this.raiz = new NodoMVias<>(orden,datoAInsertar);
             return;
         }
         
@@ -52,6 +62,7 @@ public class ArbolMViasBusqueda <T extends Comparable<T>> implements IArbolBusqu
                 throw new ExcepcionDatoYaExiste();
             }
             if(nodoEnTurno.esHoja()){ // si el nodo es hoja
+                
                 if(nodoEnTurno.estanDatosLLenos()){
                     // no hay espacio
                      int posicionPorDondeBajar = this.buscarPosicionPorDondeBajar(nodoEnTurno, datoAInsertar); // falta implementar
@@ -89,18 +100,80 @@ public class ArbolMViasBusqueda <T extends Comparable<T>> implements IArbolBusqu
     }
 
     @Override
-    public void eliminar(T dato) throws ExcepcionDatoNoExiste {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void eliminar(T datoAEliminar) throws ExcepcionDatoNoExiste {
+        if(datoAEliminar == null){
+            throw new IllegalArgumentException();
+        }
+        this.raiz = eliminar(raiz , datoAEliminar);
+    }
+    
+    private NodoMVias<T> eliminar(NodoMVias<T> nodoEnTurno, T datoAEliminar) throws ExcepcionDatoNoExiste{
+        if(NodoMVias.esNodoVacio(nodoEnTurno)){
+            throw new ExcepcionDatoNoExiste();
+        }
+        
+        int posicionDeDatoAEliminar = buscarPosicionDeDatoEnNodo(nodoEnTurno, datoAEliminar);
+        
+        if(posicionDeDatoAEliminar == POSICION_INVALIDA){
+            int posicionPorDondeBajar = buscarPosicionPorDondeBajar(nodoEnTurno, datoAEliminar);
+            NodoMVias<T> supuestoNuevoHijo = eliminar(nodoEnTurno.getHijo(posicionPorDondeBajar)
+                                            , datoAEliminar);
+            nodoEnTurno.setHijo(posicionPorDondeBajar, supuestoNuevoHijo);
+            return nodoEnTurno;
+        }
+        
+        if(nodoEnTurno.esHoja()){ //caso 1
+            this.eliminarDatoDePosicion(nodoEnTurno,posicionDeDatoAEliminar);
+            if(nodoEnTurno.nroDeDatosNoVacios() == 0){ // por si al eliminar en una hoja se borra, quede vacio
+                return NodoMVias.nodoVacio();
+            }
+            return nodoEnTurno;
+        }
+        
+        T datoReemplazo = null;
+        
+        if(existenHijosDespuesDePosicion(nodoEnTurno,posicionDeDatoAEliminar)){
+            datoReemplazo = buscarSucesorInOrden(nodoEnTurno,posicionDeDatoAEliminar);
+        }else if(existenHijosAntesDePosicion(nodoEnTurno,posicionDeDatoAEliminar)){
+            datoReemplazo = buscarPredecesorInOrden(nodoEnTurno,posicionDeDatoAEliminar);
+        }
+        if(datoReemplazo != null){           
+            nodoEnTurno = eliminar(nodoEnTurno, datoReemplazo);      
+            nodoEnTurno.setDato(posicionDeDatoAEliminar, datoReemplazo);
+            return nodoEnTurno;
+            
+        }else{      
+            this.eliminarDatoManteniendoOrdenLosHijos(nodoEnTurno ,posicionDeDatoAEliminar); //metodopor mi
+            return nodoEnTurno;
+        }
+                
     }
 
     @Override
     public T buscar(T dato) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        if(dato == null){
+            throw new IllegalArgumentException("dato no puede ser nulo");
+        }
+        if(!this.esArbolVacio()){
+            NodoMVias<T> nodoEnturno = raiz;
+            while (!NodoMVias.esNodoVacio(nodoEnturno)) {
+                for (int i = 0; i < nodoEnturno.nroDeDatosNoVacios(); i++) {
+                    if (nodoEnturno.getDato(i).compareTo(dato) == 0) {
+                        return nodoEnturno.getDato(i);
+                    }
+                }
+                
+                int posicionPordondeBajar = this.buscarPosicionPorDondeBajar(nodoEnturno, dato);
+                nodoEnturno = nodoEnturno.getHijo(posicionPordondeBajar);
+            }
+        }
+        
+        return null;
     }
 
     @Override
     public boolean contiene(T dato) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return this.buscar(dato) != null;
     }
 
     @Override
@@ -123,13 +196,52 @@ public class ArbolMViasBusqueda <T extends Comparable<T>> implements IArbolBusqu
 
     @Override
     public int altura() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return altura(raiz);
+    }
+    
+    private int altura(NodoMVias<T> nodoEnTurno){
+        if(NodoMVias.esNodoVacio(nodoEnTurno)){
+            return 0;
+        }
+        
+        int altura = 0;
+        for (int i = 0; i <= nodoEnTurno.nroDeDatosNoVacios(); i++) {
+            int alturaHijo = altura(nodoEnTurno.getHijo(i));
+            if(alturaHijo > altura){
+                altura = alturaHijo;
+            }
+        }
+        /*int alturaUltimoHijo = altura(nodoEnTurno.getHijo(nodoEnTurno.nroDeDatosNoVacios()));
+        if(alturaUltimoHijo > altura){
+            
+            return alturaUltimoHijo+1;
+        }*/
+        return altura+1;
+        
     }
 
 
     @Override
     public int nivel() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return nivel(raiz);
+    }
+    
+    private int nivel(NodoMVias<T> nodoEnTurno){
+        if(NodoMVias.esNodoVacio(nodoEnTurno)){
+            return -1;
+        }
+        if(nodoEnTurno.esHoja()){
+            return 0;
+        }
+        int nivelActual = 0;
+        for (int i = 0; i <= nodoEnTurno.nroDeDatosNoVacios(); i++) {
+            int nivelHijoNodoEnTurno = nivel(nodoEnTurno.getHijo(i));
+            if(nivelHijoNodoEnTurno > nivelActual){
+                nivelActual = nivelHijoNodoEnTurno;
+            }
+        }
+        
+        return nivelActual + 1;
     }
 
     @Override
@@ -280,5 +392,210 @@ public class ArbolMViasBusqueda <T extends Comparable<T>> implements IArbolBusqu
 
     
    
+   //PRACTICAS
+    
+    //1. Para un árbol mvias de búsqueda implementar un método que reciba un dato, la busque en el árbol,
+    //en caso de encontrarlo que retorne en que nivel está. Que retorne -1 en caso de no estar el dato en el
+    //árbol. La implementación debe ser recursiva.
+    
+    public int nivelDato(T dato){
+        return nivelDato(this.raiz, dato);
+    }
 
+    private int nivelDato(NodoMVias<T> nodoEnTurno, T dato) {
+        
+        if(NodoMVias.esNodoVacio(nodoEnTurno)){
+            return -1;
+        }
+        
+        for (int i = 0; i < nodoEnTurno.nroDeDatosNoVacios(); i++) {
+            if(nodoEnTurno.getDato(i).compareTo(dato) == 0){
+                return 0;
+            }
+        }
+        int bajar = buscarPosicionPorDondeBajar(nodoEnTurno, dato);
+        int nivelDeldato = nivelDato(nodoEnTurno.getHijo(bajar),dato);
+        
+        return nivelDeldato >= 0 ? nivelDeldato + 1 : -1;
+
+    }
+    
+    public boolean nodoCompletoNivel(int nivel){
+        if(nivel < 0){
+            return false;
+        }
+        return nodoCompletoNivel(raiz, nivel);
+    }
+
+    private boolean nodoCompletoNivel(NodoMVias<T> nodoEnTurno, int nivel) {
+        if(NodoMVias.esNodoVacio(nodoEnTurno)){
+            return false;
+        }
+        
+        if(nivel == 0){
+            for (int i = 0; i <= nodoEnTurno.nroDeDatosNoVacios(); i++) {
+                if(nodoEnTurno.esHijoVacio(i)){
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        for (int i = 0; i <= nodoEnTurno.nroDeDatosNoVacios(); i++) {
+            if(!nodoCompletoNivel(nodoEnTurno.getHijo(i), nivel-1)){
+                return false;
+            }           
+        }
+        
+        return true;
+    }
+    
+    
+    public int nroDedatosHojas(int nivel){
+        
+        return nroDedatosHojas(raiz, nivel);
+    }
+
+    private int nroDedatosHojas(NodoMVias<T> nodoEnTurno, int nivel) {
+        if(NodoMVias.esNodoVacio(nodoEnTurno)){
+            return 0;
+        }
+        
+        if (nivel < 0) {
+            int cantHojas = 0;
+            if(nodoEnTurno.esHoja()){
+                return 1;
+            }else{
+                
+                for(int i = 0; i <= nodoEnTurno.nroDeDatosNoVacios(); i++) {
+                    cantHojas += nroDedatosHojas(nodoEnTurno.getHijo(i), nivel);
+                }
+            }
+            
+            return cantHojas;
+        }
+        int cantTotalDeHojasCadaHijo = 0;
+        for (int i = 0; i <= nodoEnTurno.nroDeDatosNoVacios(); i++) {
+             cantTotalDeHojasCadaHijo += nroDedatosHojas(nodoEnTurno.getHijo(i), nivel-1);
+        }
+        
+       return cantTotalDeHojasCadaHijo;
+    }
+
+    private void eliminarDatoDePosicion(NodoMVias<T> nodoEnTurno, int posicionDeDatoAEliminar) {
+        int posicionDelUltimoDato = nodoEnTurno.nroDeDatosNoVacios()-1;
+        for (int i = posicionDeDatoAEliminar; i < posicionDelUltimoDato; i++) {
+            nodoEnTurno.setDato(i, nodoEnTurno.getDato(i+1));
+        }   
+        nodoEnTurno.setDato(posicionDelUltimoDato, (T)NodoMVias.datoVacio());
+    }
+
+    private boolean existenHijosDespuesDePosicion(NodoMVias<T> nodoEnTurno, int posicionDeDatoAEliminar) { 
+        return !nodoEnTurno.esHijoVacio(posicionDeDatoAEliminar+1);
+    }
+
+    private boolean existenHijosAntesDePosicion(NodoMVias<T> nodoEnTurno, int posicionDeDatoAEliminar) {
+        return !nodoEnTurno.esHijoVacio(posicionDeDatoAEliminar);
+    }
+
+    private T buscarSucesorInOrden(NodoMVias<T> nodoEnTurno, int posicionDeDatoAEliminar) {
+        NodoMVias<T> nodoHijoDerecho = nodoEnTurno.getHijo(posicionDeDatoAEliminar+1);
+        while(!NodoMVias.esNodoVacio(nodoHijoDerecho.getHijo(0))){
+            nodoHijoDerecho = nodoHijoDerecho.getHijo(0);
+        }
+        return nodoHijoDerecho.getDato(0);
+    }
+
+    private T buscarPredecesorInOrden(NodoMVias<T> nodoEnTurno, int posicionDeDatoAEliminar) {
+        NodoMVias<T> nodoHijoIzquierdo = nodoEnTurno.getHijo(posicionDeDatoAEliminar);
+        while(!NodoMVias.esNodoVacio(nodoHijoIzquierdo.getHijo(nodoHijoIzquierdo.nroDeDatosNoVacios()))){
+            nodoHijoIzquierdo = nodoHijoIzquierdo.getHijo(nodoHijoIzquierdo.nroDeDatosNoVacios());
+        }
+        return nodoHijoIzquierdo.getDato(nodoHijoIzquierdo.nroDeDatosNoVacios()-1);
+    }
+
+    private void eliminarDatoManteniendoOrdenLosHijos(NodoMVias<T> nodoEnTurno, int posicionDeDatoAEliminar) {
+        
+        int posicionDelDatoFinal = nodoEnTurno.nroDeDatosNoVacios()-1;
+        for (int i = posicionDeDatoAEliminar; i < posicionDelDatoFinal; i++) {
+            nodoEnTurno.setDato(i, nodoEnTurno.getDato(i+1));
+        }
+        
+        for (int i = posicionDeDatoAEliminar+2; i <= posicionDelDatoFinal; i++) {               
+                if(!nodoEnTurno.esHijoVacio(i)){
+                    nodoEnTurno.setHijo(i-1, nodoEnTurno.getHijo(i));
+                    nodoEnTurno.setHijo(i, NodoMVias.nodoVacio());
+                }   
+        }
+        
+        nodoEnTurno.setDato(posicionDelDatoFinal, (T)NodoMVias.datoVacio());
+        
+    }
+
+    
+    //recursivo
+    public T buscarPractica(T datoABuscar){
+        return buscarPractica(raiz, datoABuscar);
+    }
+
+    private T buscarPractica(NodoMVias<T> nodoEnTurno, T datoABuscar ) {
+        if(NodoMVias.esNodoVacio(nodoEnTurno)){
+            return null;
+        }
+        T datoEncontrado = null;
+        for (int i = 0; i < nodoEnTurno.nroDeDatosNoVacios(); i++) {
+            if(datoABuscar.compareTo(nodoEnTurno.getDato(i)) == 0){
+                return nodoEnTurno.getDato(i);
+            }
+           datoEncontrado = buscarPractica(nodoEnTurno.getHijo(i), datoABuscar);       
+        }
+        
+        if(datoEncontrado == null){
+            return buscarPractica(nodoEnTurno.getHijo(nodoEnTurno.nroDeDatosNoVacios()),datoABuscar);
+        }else{
+            return datoEncontrado;
+        }
+            
+    }
+    
+    //iterativo
+    
+    public T buscarPracticaItera(T datoABuscar ) {
+       
+        NodoMVias<T> nodoEnTurno = raiz;
+        
+        while(!NodoMVias.esNodoVacio(nodoEnTurno)){
+            for (int i = 0; i < nodoEnTurno.nroDeDatosNoVacios(); i++) {
+                if(datoABuscar.compareTo(nodoEnTurno.getDato(i)) == 0){
+                    return nodoEnTurno.getDato(i);
+                }
+            }
+            
+            int posicionPorDondeBajar = this.buscarPosicionPorDondeBajar(nodoEnTurno, datoABuscar);
+            nodoEnTurno = nodoEnTurno.getHijo(posicionPorDondeBajar);
+        }
+        return null;  
+    }
+
+    
+   public T mayor(){
+       return mayor(raiz);
+   }
+   
+   private T mayor(NodoMVias<T> nodoEnTurno){
+       if(NodoMVias.esNodoVacio(nodoEnTurno)){
+           return (T)NodoMVias.datoVacio();
+       }
+       
+       T datoMayor = nodoEnTurno.getDato(nodoEnTurno.nroDeDatosNoVacios()-1);
+       int posicionPorDondeBajar = nodoEnTurno.nroDeDatosNoVacios();
+       
+       T datomayorAbajo = mayor(nodoEnTurno.getHijo(posicionPorDondeBajar));
+       
+       if(datomayorAbajo != null){
+           return datomayorAbajo;
+       }
+       
+       return datoMayor;
+   }
 }

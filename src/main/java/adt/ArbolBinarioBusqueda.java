@@ -206,7 +206,7 @@ public class ArbolBinarioBusqueda<T extends Comparable<T>> implements IArbolBusq
        
        return listaDeRecorrido;
    }
-   
+    
    private void meterEnPilaParaPostOrden(NodoBinario<T> nodoAux, Stack<NodoBinario<T>> pilaDeNodos){
        
        while(!NodoBinario.esNodoVacio(nodoAux)){
@@ -799,5 +799,291 @@ public class ArbolBinarioBusqueda<T extends Comparable<T>> implements IArbolBusq
 public String toString() {
     return toStringEstructura(this.raiz, "", false);
 }
+    
+
+    //    2. Para un árbol binario de búsqueda implemente un método que retorne otro arbol que sea el reflejo
+//    del árbol original.
+    
+    public ArbolBinarioBusqueda<T> arbolEspejo(){
+        
+        NodoBinario<T> nuevoArbol = arbolEspejo(raiz);
+        ArbolBinarioBusqueda<T> nuevo = new ArbolBinarioBusqueda<>();
+        nuevo.raiz = nuevoArbol;
+        return nuevo;
+    }
+
+    private NodoBinario<T> arbolEspejo(NodoBinario<T> nodoEnTurno) {
+       if(NodoBinario.esNodoVacio(nodoEnTurno)){
+           return null;
+       }
+       
+       NodoBinario<T> nuevo = new NodoBinario<>(nodoEnTurno.getDato());
+       
+       NodoBinario<T> espejoXIzquierda = arbolEspejo(nodoEnTurno.getHijoIzq());
+       NodoBinario<T> espejoXDerecha = arbolEspejo(nodoEnTurno.getHijoDer());
+       
+        
+        nuevo.setHijoDer(espejoXIzquierda);
+        nuevo.setHijoIzq(espejoXDerecha);
+        
+        return nuevo;
+    }
+    
+    
+    public ArbolBinarioBusqueda<T> espejoIterativo(){
+        
+        Queue<NodoBinario<T>> colaDeNodos = new LinkedList<>();
+        ArbolBinarioBusqueda<T> nuevoArbol = this.clonarArbol();
+        
+        colaDeNodos.offer(nuevoArbol.raiz);
+        
+        while(!colaDeNodos.isEmpty()){
+            NodoBinario<T> nodoEnTurno = colaDeNodos.poll();
+            
+            NodoBinario<T> copiaAux = nodoEnTurno.getHijoIzq();
+            nodoEnTurno.setHijoIzq(nodoEnTurno.getHijoDer());
+            nodoEnTurno.setHijoDer(copiaAux);
+            
+            if(!NodoBinario.esNodoVacio(nodoEnTurno.getHijoDer())){
+                colaDeNodos.offer(nodoEnTurno.getHijoDer());
+            }
+            if(!NodoBinario.esNodoVacio(nodoEnTurno.getHijoIzq())){
+                colaDeNodos.offer(nodoEnTurno.getHijoIzq());
+            }
+        }
+        return nuevoArbol;
+    }
+    
+    private ArbolBinarioBusqueda<T> clonarArbol(){
+        ArbolBinarioBusqueda<T> nuevoArbol = new ArbolBinarioBusqueda<>();
+        NodoBinario<T> nuevaRaiz = new NodoBinario<>();
+        nuevaRaiz = clonarArbol(raiz);
+        nuevoArbol.raiz = nuevaRaiz;
+        return nuevoArbol;
+                
+    }
+
+    private NodoBinario<T> clonarArbol(NodoBinario<T> raiz) {
+        if(NodoBinario.esNodoVacio(raiz)){
+            return null;
+        }
+        NodoBinario<T> nodoEnTurno = new NodoBinario<>(raiz.getDato());
+        NodoBinario<T> clonXIzquierda = clonarArbol(raiz.getHijoIzq());
+        NodoBinario<T> clonXDerecha = clonarArbol(raiz.getHijoDer());
+        
+        nodoEnTurno.setHijoIzq(clonXIzquierda);
+        nodoEnTurno.setHijoDer(clonXDerecha);
+        
+        return nodoEnTurno;
+    }
+    
+    
+    
+    
+    
+    public boolean EsZurdo(){
+        return Eszurdo(raiz);
+    }
+    
+    private boolean Eszurdo(NodoBinario<T> nodoEnTurno) {
+        if(NodoBinario.esNodoVacio(nodoEnTurno) || nodoEnTurno.esHoja()){
+            return true;
+        }
+        
+        boolean esZurdoXIzqui = Eszurdo(nodoEnTurno.getHijoIzq());
+        boolean esZurXDere = Eszurdo(nodoEnTurno.getHijoDer());
+        
+        if(!esZurdoXIzqui || !esZurXDere){
+            return false;
+        }
+        
+        int cantidadXIzqui = sizeExam(nodoEnTurno.getHijoIzq());
+        int cantidadXDerecha = sizeExam(nodoEnTurno.getHijoDer());
+        
+        return cantidadXIzqui > cantidadXDerecha;
+    }
+    
+    private int sizeExam(NodoBinario<T> nodoEnTurno) {
+        if(NodoBinario.esNodoVacio(nodoEnTurno)){
+            return 0;
+        }
+       
+        
+        int cantPorIzq = sizeExam(nodoEnTurno.getHijoIzq());
+        int cantPorDere = sizeExam(nodoEnTurno.getHijoDer());
+        
+        return cantPorIzq + cantPorDere + 1;
+    }
+    
+    
+    public boolean EszurdoIterativo(){
+        Queue<NodoBinario<T>> colaDeNodos = new LinkedList<>();
+        colaDeNodos.offer(raiz);
+        
+        while(!colaDeNodos.isEmpty()){
+            NodoBinario<T> nodoEnTurno = colaDeNodos.poll();
+            if(!nodoEnTurno.esHoja()){
+                
+                if(!(this.sizeExam(nodoEnTurno.getHijoIzq()) > this.sizeExam(nodoEnTurno.getHijoDer()))){
+                    return false;
+                }  
+            }
+              
+            if(!nodoEnTurno.esVacioHijoIzq()){
+                colaDeNodos.offer(nodoEnTurno.getHijoIzq());
+            }
+            if(!nodoEnTurno.esVacioHijoDer()){
+                colaDeNodos.offer(nodoEnTurno.getHijoDer());
+            }
+        }
+        
+        return true;
+    }
+    
+    
+    public int CantidadHojasAlMenosUnHijo(){
+        Stack<NodoBinario<T>> pilaNodos = new Stack<>();
+        NodoBinario<T> nodoEnTurno = raiz;
+        llenarPilaRecorridoPost(nodoEnTurno,pilaNodos);
+        int contador = 0;
+        while(!pilaNodos.isEmpty()){
+            nodoEnTurno = pilaNodos.pop();
+            //aqui tenemos dato
+            if(nodoEnTurno.esHoja()){
+                contador++;
+            }
+            if(!nodoEnTurno.esVacioHijoIzq() && nodoEnTurno.esVacioHijoDer()){
+                contador++;
+            }       
+            if(nodoEnTurno.esVacioHijoIzq() && !nodoEnTurno.esVacioHijoDer()){
+                contador++;
+            }
+            if(!pilaNodos.isEmpty()){
+                NodoBinario<T> NodoTope = pilaNodos.peek();
+                if(!NodoTope.esVacioHijoDer()){
+                    if(nodoEnTurno != NodoTope.getHijoDer()){
+                        llenarPilaRecorridoPost(nodoEnTurno.getHijoDer(),pilaNodos);
+                    }
+                }
+            }
+            
+        }    
+        return contador;
+    }
+
+    private void llenarPilaRecorridoPost(NodoBinario<T> nodoEnTurno, Stack<NodoBinario<T>> pilaNodos) {
+        while(!NodoBinario.esNodoVacio(nodoEnTurno)){
+            pilaNodos.push(nodoEnTurno);
+            if(!nodoEnTurno.esVacioHijoIzq()){
+                nodoEnTurno = nodoEnTurno.getHijoIzq();
+            }else{
+                nodoEnTurno = nodoEnTurno.getHijoDer();
+            }
+        }
+    }
+    
+    
+    //reconstruccion ArbolCon RIor y RPostO
+    
+    private NodoBinario<T> recontruccionConPostorden(List<T> recorridoPost, List<T> recorridoInOrden){
+        if(recorridoPost.isEmpty() && recorridoInOrden.isEmpty()){
+            return NodoBinario.nodoVacio();
+        }
+        
+        T DatoPostOrden = recorridoPost.getLast();
+        NodoBinario<T> nuevaRaiz = new NodoBinario<>(DatoPostOrden);   
+        int posicinDatoEnInOrden = recorridoInOrden.indexOf(DatoPostOrden);
+        
+        List<T> recorridoPostOIzqui = new LinkedList<>();
+        List<T> recorridoInOIzqui = new LinkedList<>();
+        
+        for (int i = 0; i < posicinDatoEnInOrden; i++) {
+            recorridoPostOIzqui.add(recorridoPost.get(i));
+            recorridoInOIzqui.add(recorridoInOrden.get(i));
+        }    
+        
+        List<T> recorridoPostODere = new LinkedList<>();
+        List<T> recorridoInODere = new LinkedList<>();
+        
+        for (int i = posicinDatoEnInOrden+1; i < recorridoInOrden.size(); i++) {
+            recorridoPostODere.add(recorridoPost.get(i-1));
+            recorridoInODere.add(recorridoInOrden.get(i));
+        }
+        
+        NodoBinario<T> hijosIzquierdos = recontruccionConPostorden(recorridoPostOIzqui, recorridoInOIzqui);
+        NodoBinario<T> hijosXDerecha = recontruccionConPostorden(recorridoPostODere, recorridoInODere);
+        
+        nuevaRaiz.setHijoIzq(hijosIzquierdos);
+        nuevaRaiz.setHijoDer(hijosXDerecha);
+        
+        
+        return nuevaRaiz;
+        
+    }
+    
+    
+    
+    private void eliminarPractica(T datoAEliminar) throws ExcepcionDatoYaExiste{
+        if(datoAEliminar == null){
+            throw new IllegalArgumentException("");
+        }
+        
+        raiz = eliminarPractica(raiz,datoAEliminar);
+    }
+
+    private NodoBinario<T> eliminarPractica(NodoBinario<T> nodoTurno, T datoAEliminar) throws ExcepcionDatoYaExiste{
+        if(NodoBinario.esNodoVacio(nodoTurno)){
+            throw new ExcepcionDatoYaExiste("");
+        }
+        
+        T datoNodo = nodoTurno.getDato();
+        
+        if(datoAEliminar.compareTo(datoNodo) < 0){
+            NodoBinario<T> supuestoNuevoHijoIzqui = eliminarPractica(nodoTurno.getHijoIzq(), datoAEliminar);
+            nodoTurno.setHijoIzq(supuestoNuevoHijoIzqui);
+            return nodoTurno;
+        }
+        
+        if(datoAEliminar.compareTo(datoNodo) > 0){
+            NodoBinario<T> supuestoNuevoHijoDerecha = eliminarPractica(nodoTurno.getHijoDer(), datoAEliminar);
+            nodoTurno.setHijoIzq(supuestoNuevoHijoDerecha);
+            return nodoTurno;
+        }
+        
+        //caso 1
+        if(nodoTurno.esHoja()){
+            return NodoBinario.nodoVacio();
+        }
+        //caso 2a
+        if(!nodoTurno.esVacioHijoIzq() && nodoTurno.esVacioHijoDer()){
+            NodoBinario<T> hijoIzquier = nodoTurno.getHijoIzq();
+            nodoTurno.setHijoIzq(NodoBinario.nodoVacio());
+            return hijoIzquier;
+        }
+        //caso 2b
+        if(nodoTurno.esVacioHijoIzq() && !nodoTurno.esVacioHijoDer()){
+            NodoBinario<T> hijodere = nodoTurno.getHijoDer();
+            nodoTurno.setHijoDer(NodoBinario.nodoVacio());
+            return hijodere;
+        }
+        
+        //caso 3
+        T remplazo = sucesorInorden(nodoTurno.getHijoDer());     
+        NodoBinario<T> supuestoNuevoHijoDercho = eliminarPractica(nodoTurno.getHijoDer(), remplazo);
+        nodoTurno.setHijoDer(supuestoNuevoHijoDercho);
+        nodoTurno.setDato(remplazo);
+        return nodoTurno;
+    }
+
+    private T sucesorInorden(NodoBinario<T> hijoDer) {
+        while(!hijoDer.esVacioHijoIzq()){
+            hijoDer = hijoDer.getHijoIzq();
+        }
+        
+        return hijoDer.getDato();
+    }
+    
+   
+
     
 }

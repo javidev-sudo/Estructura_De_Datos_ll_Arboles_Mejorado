@@ -5,5 +5,6 @@ adt\ArbolMViasBusqueda.class
 adt\AVL.class
 com\mycompany\arboles\Arboles.class
 adt\NodoBinario.class
+excepciones\ExcepcionOrdenInvalido.class
 adt\IArbolBusqueda.class
 excepciones\ExcepcionDatoNoExiste.class
